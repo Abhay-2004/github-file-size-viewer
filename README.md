@@ -13,5 +13,5 @@ A Google Chrome extension that displays the size of each file and folder on GitH
 ### Local Testing
 1. **Clone or Download the Repository:**
    ```bash
-   git clone https://github.com/yourusername/github-file-size-viewer.git
+   git clone https://github.com/yourusername/github-file-size-viewer.git](https://github.com/Abhay-2004/github-file-size-viewer.git
    cd github-file-size-viewer
