@@ -1,28 +1,33 @@
-// popup.js
+document.addEventListener("DOMContentLoaded", () => {
+  const tokenInput = document.getElementById("github-token");
+  const toggleBtn = document.getElementById("toggle-visibility");
+  const saveBtn = document.getElementById("save-token");
+  const statusEl = document.getElementById("status");
 
-document.addEventListener('DOMContentLoaded', () => {
-  // Load any saved token (if available) and display it
+  // Load any existing token
   chrome.storage.sync.get("githubToken", (result) => {
     if (result.githubToken) {
-      document.getElementById('github-token').value = result.githubToken;
-      document.getElementById('status').textContent = 'Token is already saved!';
+      tokenInput.value = result.githubToken;
+      statusEl.textContent = "Token is already saved!";
     }
   });
 
-  // Handle "Save Token" button click
-  document.getElementById('save-token').addEventListener('click', () => {
-    const tokenInput = document.getElementById('github-token');
-    const token = tokenInput.value.trim();
-
-    // If the token field is empty, show an error message and do not save
-    if (!token) {
-      document.getElementById('status').textContent = 'API token is required!';
-      return;
+  // Toggle password visibility
+  toggleBtn.addEventListener("click", () => {
+    if (tokenInput.type === "password") {
+      tokenInput.type = "text";
+      toggleBtn.textContent = "Hide";
+    } else {
+      tokenInput.type = "password";
+      toggleBtn.textContent = "Show";
     }
+  });
 
+  // Save the token
+  saveBtn.addEventListener("click", () => {
+    const token = tokenInput.value.trim();
     chrome.storage.sync.set({ githubToken: token }, () => {
-      console.log('GitHub token saved:', token);
-      document.getElementById('status').textContent = 'Token saved successfully!';
+      statusEl.textContent = "Token saved successfully!";
     });
   });
 });

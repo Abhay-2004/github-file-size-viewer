@@ -3,84 +3,118 @@
 <head>
   <title>GitHub File Size Viewer</title>
   <style>
-    /* Basic Reset */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    /* Popup Container */
+    /* Overall popup styling */
     body {
       font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-      background: #f6f8fa; /* GitHub-like background */
-      color: #24292e;     /* GitHub text color */
-      width: 300px;
-      min-height: 220px;
+      background: #f6f8fa; /* GitHub-like background color */
+      margin: 0;
+      padding: 0;
+      width: 300px; /* A bit wider than before */
+      height: auto;
       display: flex;
       align-items: center;
       justify-content: center;
     }
 
+    /* Card container for a more professional look */
     .container {
+      background: #ffffff;
+      border: 1px solid #d1d5da;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      padding: 16px;
+      margin: 10px;
       width: 90%;
-      margin: 10px auto;
-      text-align: center;
+      box-sizing: border-box;
     }
 
+    /* Heading and text styling */
     h3 {
+      margin-top: 0;
       margin-bottom: 8px;
-      font-size: 1.1em;
+      font-size: 1.2em;
       font-weight: 600;
+      color: #24292e;
     }
-
     p {
+      margin-bottom: 12px;
       font-size: 0.9em;
-      margin-bottom: 10px;
+      color: #24292e;
       line-height: 1.4em;
     }
 
-    input[type="text"] {
-      width: 100%;
-      padding: 8px;
-      margin: 8px 0;
-      border-radius: 4px;
-      border: 1px solid #d1d5da;
-      font-size: 0.9em;
+    /* Row containing the token input + Show/Hide button */
+    .token-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 12px;
     }
 
-    button {
-      background-color: #2ea44f; /* GitHub green */
+    /* Input field styling */
+    .token-row input[type="password"],
+    .token-row input[type="text"] {
+      flex: 1;
+      padding: 6px 8px;
+      border: 1px solid #d1d5da;
+      border-radius: 4px;
+      font-size: 0.9em;
+      color: #24292e;
+    }
+
+    /* Show/Hide toggle button styling */
+    .token-row button {
+      margin-left: 8px;
+      padding: 6px 10px;
+      font-size: 0.85em;
+      cursor: pointer;
+      background-color: #e1e4e8;
+      border: 1px solid #d1d5da;
+      border-radius: 4px;
+      color: #24292e;
+    }
+    .token-row button:hover {
+      background-color: #d1d5da;
+    }
+
+    /* “Save Token” button styling */
+    #save-token {
+      background-color: #2ea44f;
       color: #fff;
       border: none;
-      padding: 8px 12px;
       border-radius: 4px;
+      padding: 8px 12px;
       cursor: pointer;
       font-size: 0.9em;
       font-weight: 500;
-      margin-top: 5px;
     }
-
-    button:hover {
+    #save-token:hover {
       background-color: #2c974b;
     }
 
+    /* Status text (e.g., “Token saved successfully!”) */
     #status {
       margin-top: 10px;
       font-size: 0.85em;
-      min-height: 18px; /* Ensures space even if empty */
+      min-height: 18px;
+      color: #28a745;
     }
   </style>
 </head>
 <body>
   <div class="container">
     <h3>GitHub File Size Viewer</h3>
-    <p>Please enter your GitHub Personal Access Token:</p>
-    <input type="text" id="github-token" placeholder="GitHub Token" />
+    <p>Enter your GitHub Personal Access Token (recommended):</p>
+
+    <div class="token-row">
+      <input type="password" id="github-token" placeholder="GitHub Token" />
+      <button id="toggle-visibility">Show</button>
+    </div>
+
     <button id="save-token">Save Token</button>
     <div id="status"></div>
   </div>
 
+  <!-- Link to your existing popup.js -->
   <script src="popup.js"></script>
 </body>
 </html>

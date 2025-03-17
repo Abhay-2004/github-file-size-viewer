@@ -1,8 +1,6 @@
-// content.js
-
 console.log("Content script loaded.");
 
-// 1. Retrieve GitHub token from Chrome storage
+// Retrieve GitHub token from Chrome storage
 function getToken() {
   return new Promise((resolve) => {
     chrome.storage.sync.get("githubToken", (result) => {
@@ -11,7 +9,7 @@ function getToken() {
   });
 }
 
-// 2. Format the size in a human-readable way
+// Format the size in a human-readable way
 function formatSize(bytes) {
   if (bytes < 1024 * 1024) {
     return (bytes / 1024).toFixed(2) + " KB";
@@ -22,7 +20,7 @@ function formatSize(bytes) {
   }
 }
 
-// 3. Recursively calculate the total size of a folder
+// Recursively calculate the total size of a folder
 async function calculateFolderSize(apiUrl, headers) {
   console.log("Calculating folder size for:", apiUrl);
   try {
@@ -33,7 +31,6 @@ async function calculateFolderSize(apiUrl, headers) {
     }
     const data = await response.json();
     let totalSize = 0;
-
     if (Array.isArray(data)) {
       const sizePromises = data.map((item) => {
         if (item.type === "file" && typeof item.size === "number") {
@@ -54,14 +51,13 @@ async function calculateFolderSize(apiUrl, headers) {
   }
 }
 
-// 4. Fetch file/folder size from GitHub API with enhanced error handling
+// Fetch file/folder size from GitHub API with enhanced error handling
 async function fetchFileSize(apiUrl) {
   const token = await getToken();
   let headers = { "Accept": "application/vnd.github.v3+json" };
   if (token) {
     headers["Authorization"] = "token " + token;
   }
-
   console.log("Fetching size for:", apiUrl);
   try {
     const response = await fetch(apiUrl, { headers });
@@ -71,14 +67,10 @@ async function fetchFileSize(apiUrl) {
     }
     const data = await response.json();
     console.log("Received data:", data);
-
-    // Check if GitHub returned an error message
     if (data && data.message) {
       console.error("GitHub API error message:", data.message);
       return "N/A";
     }
-
-    // If it's a file object with a size
     if (data && !Array.isArray(data) && data.type === "file") {
       if (typeof data.size === "number") {
         return formatSize(data.size);
@@ -86,9 +78,7 @@ async function fetchFileSize(apiUrl) {
         console.error("File object missing size:", data);
         return "N/A";
       }
-    }
-    // If it's a directory, calculate its size recursively
-    else if (Array.isArray(data)) {
+    } else if (Array.isArray(data)) {
       const folderSize = await calculateFolderSize(apiUrl, headers);
       return folderSize > 0 ? formatSize(folderSize) : "Folder";
     } else {
@@ -100,25 +90,21 @@ async function fetchFileSize(apiUrl) {
   }
 }
 
-// 5. Insert the size next to each file/folder link with GitHub-like styling
+// Insert the size next to each file/folder link with GitHub-like styling
 function insertSizeAfterLink(link, sizeText) {
   const sizeSpan = document.createElement("span");
   sizeSpan.style.marginLeft = "10px";
   sizeSpan.style.fontSize = "smaller";
-  sizeSpan.style.color = "#6a737d"; // GitHub-like text color
+  sizeSpan.style.color = "#6a737d";
   sizeSpan.textContent = `(${sizeText})`;
-
   link.insertAdjacentElement("afterend", sizeSpan);
 }
 
-// 6. Main function: find all GitHub file/folder links, fetch sizes concurrently, display them
+// Main function: find all GitHub file/folder links, fetch sizes concurrently, display them
 async function displayFileSizes() {
   console.log("Running displayFileSizes...");
-
-  // GitHub file/folder links are identified by /blob/ and /tree/ in the href
   const links = document.querySelectorAll('a[href*="/blob/"], a[href*="/tree/"]');
   console.log("Found potential file/folder links:", links.length);
-
   const promises = Array.from(links).map(async (link) => {
     const urlParts = link.href.split("/");
     const user = urlParts[3];
@@ -127,17 +113,13 @@ async function displayFileSizes() {
     const branchIndex = urlParts.indexOf(typeSegment) + 1;
     const branch = urlParts[branchIndex];
     const filePath = urlParts.slice(branchIndex + 1).join("/");
-
-    // Construct the API URL
     const apiUrl = `https://api.github.com/repos/${user}/${repo}/contents/${filePath}?ref=${branch}`;
     const sizeText = await fetchFileSize(apiUrl);
     insertSizeAfterLink(link, sizeText);
   });
-
   await Promise.all(promises);
 }
 
-// 7. Run after GitHub has loaded
 window.addEventListener("load", () => {
   setTimeout(displayFileSizes, 2000);
 });
