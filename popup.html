@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>GitHub File Size Viewer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 10px;
+    }
+    h3 {
+      margin-top: 0;
+    }
+    input[type="text"] {
+      width: 90%;
+      padding: 5px;
+      margin: 5px 0;
+    }
+    button {
+      padding: 5px 10px;
+    }
+    #status {
+      color: green;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h3>GitHub File Size Viewer</h3>
+  <p>Enter your GitHub Personal Access Token below (optional but recommended to avoid rate limits):</p>
+  <input type="text" id="github-token" placeholder="GitHub Token" />
+  <button id="save-token">Save Token</button>
+  <div id="status"></div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>
