@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>GitHub File Size Viewer Setup</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: #f6f8fa;
+      color: #24292e;
+      margin: 0;
+      padding: 20px;
+    }
+    h2 {
+      margin-top: 0;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      margin: 8px 0;
+      border: 1px solid #d1d5da;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+    button {
+      background-color: #2ea44f;
+      color: #fff;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9em;
+      font-weight: 500;
+    }
+    button:hover {
+      background-color: #2c974b;
+    }
+    #status {
+      margin-top: 8px;
+      font-size: 0.85em;
+      min-height: 18px;
+    }
+  </style>
+</head>
+<body>
+  <h2>GitHub File Size Viewer</h2>
+  <p>Please enter your GitHub Personal Access Token to enable file/folder size calculations:</p>
+  <input type="text" id="github-token" placeholder="GitHub Token" />
+  <button id="save-token">Save Token</button>
+  <div id="status"></div>
+  <script src="options.js"></script>
+</body>
+</html>
