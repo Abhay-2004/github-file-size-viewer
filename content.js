@@ -2,7 +2,7 @@
 
 console.log("Content script loaded.");
 
-// Helper: get GitHub token from Chrome storage
+// 1. Retrieve GitHub token from Chrome storage
 function getToken() {
   return new Promise((resolve) => {
     chrome.storage.sync.get("githubToken", (result) => {
@@ -11,22 +11,41 @@ function getToken() {
   });
 }
 
-// Recursively calculate folder size
+// 2. Format the size in a human-readable way
+function formatSize(bytes) {
+  if (bytes < 1024 * 1024) {
+    return (bytes / 1024).toFixed(2) + " KB";
+  } else if (bytes < 1024 * 1024 * 1024) {
+    return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+  } else {
+    return (bytes / (1024 * 1024 * 1024)).toFixed(2) + " GB";
+  }
+}
+
+// 3. Recursively calculate the total size of a folder
 async function calculateFolderSize(apiUrl, headers) {
   console.log("Calculating folder size for:", apiUrl);
   try {
     const response = await fetch(apiUrl, { headers });
+    if (!response.ok) {
+      console.error("Folder API error:", response.status, response.statusText);
+      return 0;
+    }
     const data = await response.json();
     let totalSize = 0;
 
     if (Array.isArray(data)) {
-      for (const item of data) {
-        if (item.type === "file" && item.size !== undefined) {
-          totalSize += item.size;
+      const sizePromises = data.map((item) => {
+        if (item.type === "file" && typeof item.size === "number") {
+          return Promise.resolve(item.size);
         } else if (item.type === "dir") {
-          totalSize += await calculateFolderSize(item.url, headers);
+          return calculateFolderSize(item.url, headers);
+        } else {
+          return Promise.resolve(0);
         }
-      }
+      });
+      const sizes = await Promise.all(sizePromises);
+      totalSize = sizes.reduce((sum, size) => sum + size, 0);
     }
     return totalSize;
   } catch (error) {
@@ -35,7 +54,7 @@ async function calculateFolderSize(apiUrl, headers) {
   }
 }
 
-// Fetch file/folder size using GitHub API
+// 4. Fetch file/folder size from GitHub API with enhanced error handling
 async function fetchFileSize(apiUrl) {
   const token = await getToken();
   let headers = { "Accept": "application/vnd.github.v3+json" };
@@ -46,17 +65,33 @@ async function fetchFileSize(apiUrl) {
   console.log("Fetching size for:", apiUrl);
   try {
     const response = await fetch(apiUrl, { headers });
+    if (!response.ok) {
+      console.error("GitHub API responded with error:", response.status, response.statusText);
+      return "N/A";
+    }
     const data = await response.json();
+    console.log("Received data:", data);
 
-    if (data && !Array.isArray(data) && data.type === "file" && data.size !== undefined) {
-      console.log("File size:", data.size);
-      return (data.size / 1024).toFixed(2) + " KB";
-    } else if (Array.isArray(data)) {
+    // Check if GitHub returned an error message
+    if (data && data.message) {
+      console.error("GitHub API error message:", data.message);
+      return "N/A";
+    }
+
+    // If it's a file object with a size
+    if (data && !Array.isArray(data) && data.type === "file") {
+      if (typeof data.size === "number") {
+        return formatSize(data.size);
+      } else {
+        console.error("File object missing size:", data);
+        return "N/A";
+      }
+    }
+    // If it's a directory, calculate its size recursively
+    else if (Array.isArray(data)) {
       const folderSize = await calculateFolderSize(apiUrl, headers);
-      console.log("Folder size:", folderSize);
-      return folderSize > 0 ? (folderSize / 1024).toFixed(2) + " KB" : "Folder";
+      return folderSize > 0 ? formatSize(folderSize) : "Folder";
     } else {
-      console.log("Data not in expected format:", data);
       return "N/A";
     }
   } catch (error) {
@@ -65,15 +100,26 @@ async function fetchFileSize(apiUrl) {
   }
 }
 
+// 5. Insert the size next to each file/folder link with GitHub-like styling
+function insertSizeAfterLink(link, sizeText) {
+  const sizeSpan = document.createElement("span");
+  sizeSpan.style.marginLeft = "10px";
+  sizeSpan.style.fontSize = "smaller";
+  sizeSpan.style.color = "#6a737d"; // GitHub-like text color
+  sizeSpan.textContent = `(${sizeText})`;
+
+  link.insertAdjacentElement("afterend", sizeSpan);
+}
+
+// 6. Main function: find all GitHub file/folder links, fetch sizes concurrently, display them
 async function displayFileSizes() {
   console.log("Running displayFileSizes...");
 
-  // Direct approach: find all <a> tags whose href contains "/blob/" or "/tree/"
-  let links = document.querySelectorAll('a[href*="/blob/"], a[href*="/tree/"]');
+  // GitHub file/folder links are identified by /blob/ and /tree/ in the href
+  const links = document.querySelectorAll('a[href*="/blob/"], a[href*="/tree/"]');
   console.log("Found potential file/folder links:", links.length);
 
-  for (const link of links) {
-    // Build the GitHub API URL
+  const promises = Array.from(links).map(async (link) => {
     const urlParts = link.href.split("/");
     const user = urlParts[3];
     const repo = urlParts[4];
@@ -81,23 +127,17 @@ async function displayFileSizes() {
     const branchIndex = urlParts.indexOf(typeSegment) + 1;
     const branch = urlParts[branchIndex];
     const filePath = urlParts.slice(branchIndex + 1).join("/");
+
+    // Construct the API URL
     const apiUrl = `https://api.github.com/repos/${user}/${repo}/contents/${filePath}?ref=${branch}`;
-
     const sizeText = await fetchFileSize(apiUrl);
-    console.log("Size for", link.href, ":", sizeText);
+    insertSizeAfterLink(link, sizeText);
+  });
 
-    // Insert the size text after the link
-    const sizeSpan = document.createElement("span");
-    sizeSpan.style.marginLeft = "10px";
-    sizeSpan.style.fontSize = "smaller";
-    sizeSpan.style.color = "#555";
-    sizeSpan.textContent = sizeText;
-
-    link.insertAdjacentElement("afterend", sizeSpan);
-  }
+  await Promise.all(promises);
 }
 
-// Delay execution to let GitHub load
+// 7. Run after GitHub has loaded
 window.addEventListener("load", () => {
   setTimeout(displayFileSizes, 2000);
 });
